@@ -1,0 +1,5 @@
+{
+  "name": "Utility Bill Dashboard AI",
+  "description": "An intelligent dashboard that reads utility bills (PDFs) using Gemini, extracts key information, and visualizes your spending over time.",
+  "requestFramePermissions": []
+}
