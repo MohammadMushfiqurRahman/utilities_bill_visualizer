@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const { parsePdf } = require('../services/pdfService');
+const Bill = require('../models/bill');
 
 // Set up multer for file storage in memory
 const storage = multer.memoryStorage();
@@ -14,27 +15,46 @@ router.post('/upload', upload.single('bill'), async (req, res, next) => {
   }
 
   try {
-    const parsedData = await parsePdf(req.file.buffer);
+    const { amountDue, dueDate, usage } = await parsePdf(req.file.buffer);
 
-    res.status(200).json({
-      message: 'File uploaded and parsed successfully!',
-      filename: req.file.originalname,
-      data: parsedData,
+    if (amountDue === null || dueDate === null || usage === null) {
+      return res.status(400).send('Could not extract all required fields from the PDF.');
+    }
+
+    const bill = await Bill.create({ amountDue, dueDate, usage });
+
+    res.status(201).json({
+      message: 'File uploaded, parsed, and saved successfully!',
+      bill,
     });
   } catch (error) {
     next(error);
   }
 });
 
-// Endpoint to get bill data (placeholder)
-router.get('/bills', (req, res) => {
-  // In a real app, this would fetch data from a database.
-  // For now, we'll return a mock array.
-  const mockBills = [
-    { id: 1, date: '2025-06-15', amount: 105.50, usage: '600 kWh' },
-    { id: 2, date: '2025-05-15', amount: 98.75, usage: '550 kWh' },
-  ];
-  res.status(200).json(mockBills);
+// Endpoint to get all bills
+router.get('/bills', async (req, res, next) => {
+  try {
+    const bills = await Bill.findAll();
+    res.status(200).json(bills);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Endpoint to get a single bill by ID
+router.get('/bills/:id', async (req, res, next) => {
+  try {
+    const bill = await Bill.findByPk(req.params.id);
+
+    if (bill) {
+      res.status(200).json(bill);
+    } else {
+      res.status(404).send('Bill not found');
+    }
+  } catch (error) {
+    next(error);
+  }
 });
 
 module.exports = router;
