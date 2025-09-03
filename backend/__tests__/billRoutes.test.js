@@ -35,14 +35,23 @@ describe('Bill Routes', () => {
   });
 
   it('should upload a bill', async () => {
-    const pdfPath = path.join(__dirname, 'dummy.pdf');
+    const pdfPath = path.join(__dirname, 'sample-bill.pdf');
 
     const res = await request(app)
       .post('/api/upload')
       .attach('bill', pdfPath);
 
     expect(res.statusCode).toEqual(201);
-    expect(res.body.bill.amountDue).toEqual(123.45);
-    expect(res.body.bill.usage).toEqual(500);
+    expect(res.body.bill.amountDue).toEqual(150.75);
+    expect(res.body.bill.usage).toEqual(750);
+  });
+
+  it('should get a single bill by id', async () => {
+    const bill = await Bill.create({ amountDue: 100, dueDate: new Date(), usage: 500 });
+
+    const res = await request(app).get(`/api/bills/${bill.id}`);
+
+    expect(res.statusCode).toEqual(200);
+    expect(res.body.amountDue).toEqual(100);
   });
 });
