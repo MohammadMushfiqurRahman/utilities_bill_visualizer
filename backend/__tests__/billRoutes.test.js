@@ -36,10 +36,11 @@ describe('Bill Routes', () => {
 
   it('should upload a bill', async () => {
     const pdfPath = path.join(__dirname, 'sample-bill.pdf');
+    const pdfBuffer = fs.readFileSync(pdfPath);
 
     const res = await request(app)
       .post('/api/upload')
-      .attach('bill', pdfPath);
+      .attach('bill', pdfBuffer, 'sample-bill.pdf');
 
     expect(res.statusCode).toEqual(201);
     expect(res.body.bill.amountDue).toEqual(150.75);

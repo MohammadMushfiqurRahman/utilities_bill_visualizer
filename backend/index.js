@@ -3,7 +3,9 @@ const express = require('express');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const errorMiddleware = require('./errorMiddleware');
+const authMiddleware = require('./authMiddleware');
 const billRoutes = require('./routes/billRoutes');
+const authRoutes = require('./routes/authRoutes');
 const sequelize = require('./database/database');
 
 const app = express();
@@ -25,7 +27,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // --- API Endpoints ---
-app.use('/api', billRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api', authMiddleware, billRoutes);
 
 // Error Handling Middleware
 app.use(errorMiddleware);
