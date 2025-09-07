@@ -4,8 +4,7 @@ services:
   backend:
     build:
       context: ./backend
-    ports:
-      - "8000:8000"
+    restart: always
     volumes:
       - ./backend/database.sqlite:/usr/src/app/database.sqlite
     env_file:
@@ -14,7 +13,8 @@ services:
   frontend:
     build:
       context: .
+    restart: always
     ports:
-      - "8080:80"
+      - "80:80"
     depends_on:
       - backend
