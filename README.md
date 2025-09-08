@@ -38,6 +38,7 @@ To get a local copy up and running, follow these simple steps.
 
 - Node.js
 - npm
+- Docker (for deployment)
 
 ### Installation
 
@@ -64,7 +65,7 @@ To get a local copy up and running, follow these simple steps.
      JWT_SECRET=your_jwt_secret
      ```
 
-### Usage
+### Local Development
 
 1. **Start the backend server**
    ```sh
@@ -94,4 +95,30 @@ The backend provides the following RESTful API endpoints:
 
 ## Deployment
 
-This application is configured for deployment using Docker and Nginx. The `docker-compose.yml` file in the root directory can be used to build and run the application in a containerized environment. The `nginx.conf` file is provided for configuring Nginx as a reverse proxy for the frontend and backend services. The CI/CD pipeline is set up using GitHub Actions to automatically build and deploy the application.
+This application is configured for continuous integration and continuous deployment (CI/CD) using GitHub Actions.
+
+### CI/CD Pipeline
+
+The CI/CD pipeline is defined in the `.github/workflows/ci-cd.yml` file and consists of the following jobs:
+
+1.  **`build-and-test-backend`:** This job builds the backend application, runs the tests, and pushes a Docker image to the GitHub Container Registry.
+2.  **`build-frontend`:** This job builds the frontend application and pushes a Docker image to the GitHub Container Registry.
+3.  **`deploy`:** This job is triggered after the `build-and-test-backend` and `build-frontend` jobs have completed successfully. It pulls the latest Docker images from the GitHub Container Registry and restarts the services using `docker-compose`.
+
+### Docker Deployment
+
+To deploy the application using Docker, you can manually run the following commands:
+
+1. **Build and run the containers**
+   ```sh
+   docker-compose up -d --build
+   ```
+2. **Access the application**
+   Open your browser and navigate to `http://localhost`
+
+### Secrets
+
+The `deploy` job requires the following secrets to be set in your GitHub repository:
+
+- `JWT_SECRET`: The secret key used to sign JWT tokens.
+- `GEMINI_API_KEY`: Your Gemini API key.
