@@ -49,6 +49,9 @@ jobs:
 
   build-frontend:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./
     outputs:
       image_tag: ${{ steps.build-and-push.outputs.digest }}
     steps:
