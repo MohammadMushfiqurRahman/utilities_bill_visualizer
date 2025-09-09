@@ -51,7 +51,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./
+        working-directory: ./frontend
     outputs:
       image_tag: ${{ steps.build-and-push.outputs.digest }}
     steps:
@@ -80,7 +80,7 @@ jobs:
         id: build-and-push
         uses: docker/build-push-action@v3
         with:
-          context: .
+          context: ./frontend
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/frontend:${{ github.sha }}
 
@@ -102,7 +102,7 @@ jobs:
         run: echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" > backend/.env
 
       - name: Create frontend .env file
-        run: echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > .env
+        run: echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > frontend/.env
 
       - name: Pull images and restart services
         run: |
