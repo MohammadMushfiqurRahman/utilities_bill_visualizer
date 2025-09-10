@@ -4,6 +4,9 @@ module.exports = {
   setupFilesAfterEnv: ['<rootDir>/src/setupTests.ts'],
   moduleNameMapper: {
     '\.(css|less|sass|scss)$': 'identity-obj-proxy',
-    '\.(gif|ttf|eot|svg|png)$': '<rootDir>/__mocks__/fileMock.js',
+    '\.(gif|ttf|eot|svg|png): '<rootDir>/__mocks__/fileMock.js',
   },
+  transformIgnorePatterns: [
+    '/node_modules/(?!(@google/genai)/).+\.js,
+  ],
 };
