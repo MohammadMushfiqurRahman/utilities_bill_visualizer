@@ -65,7 +65,13 @@ To get a local copy up and running, follow these simple steps.
      JWT_SECRET=your_jwt_secret
      ```
 
+### Database
+
+The application uses Sequelize to manage the database. When the application starts, it automatically synchronizes the models with the database, creating any missing tables. This is convenient for local development, but it is not recommended for production environments. For production, you should use a migration tool like `Sequelize-CLI` to manage database schema changes.
+
 ### Local Development
+
+When you start the backend server, the database tables will be created automatically. See the "Database" section for more information.
 
 1. **Start the backend server**
    ```sh
@@ -106,6 +112,8 @@ The CI/CD pipeline is defined in the `.github/workflows/ci-cd.yml` file and cons
 3.  **`deploy`:** This job is triggered after the `build-and-test-backend` and `build-frontend` jobs have completed successfully. It pulls the latest Docker images from the GitHub Container Registry and restarts the services using `docker-compose`.
 
 ### Docker Deployment
+
+When you deploy the application, the database tables will be created automatically. See the "Database" section for more information. For production environments, it is recommended to use a migration tool to manage database schema changes.
 
 To deploy the application using Docker, you can manually run the following commands:
 
