@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useMemo } from 'react';
 import { BillData } from './types';
 import { extractBillDataFromPdf } from './services/geminiService';
@@ -27,9 +26,9 @@ const App: React.FC = () => {
         try {
           const base64String = (reader.result as string).split(',')[1];
           const newBillsData = await extractBillDataFromPdf(base64String);
-          
+
           if (!newBillsData || newBillsData.length === 0) {
-            throw new Error("No valid bills were found in the provided PDF.");
+            throw new Error('No valid bills were found in the provided PDF.');
           }
 
           const billsWithIds: BillData[] = newBillsData.map((bill: Omit<BillData, 'id'>) => ({
@@ -37,10 +36,18 @@ const App: React.FC = () => {
             id: crypto.randomUUID(),
           }));
 
-          setBills(prevBills => [...prevBills, ...billsWithIds].sort((a, b) => new Date(a.billDate).getTime() - new Date(b.billDate).getTime()));
+          setBills((prevBills) =>
+            [...prevBills, ...billsWithIds].sort(
+              (a, b) => new Date(a.billDate).getTime() - new Date(b.billDate).getTime()
+            )
+          );
         } catch (e) {
           console.error(e);
-          setError(e instanceof Error ? `Failed to process the PDF: ${e.message}` : 'An unknown error occurred during PDF processing.');
+          setError(
+            e instanceof Error
+              ? `Failed to process the PDF: ${e.message}`
+              : 'An unknown error occurred during PDF processing.'
+          );
         } finally {
           setIsProcessing(false);
           setFileName(null);
@@ -58,37 +65,49 @@ const App: React.FC = () => {
     }
   }, []);
 
-  const apartments = useMemo(() => ['all', ...Array.from(new Set(bills.map(b => b.apartment).filter(Boolean)))], [bills]);
+  const apartments = useMemo(
+    () => ['all', ...Array.from(new Set(bills.map((b) => b.apartment).filter(Boolean)))],
+    [bills]
+  );
 
   const filteredBills = useMemo(() => {
     if (selectedApartment === 'all') {
       return bills;
     }
-    return bills.filter(bill => bill.apartment === selectedApartment);
+    return bills.filter((bill) => bill.apartment === selectedApartment);
   }, [bills, selectedApartment]);
 
-
   return (
-    <div className="min-h-screen bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-sans">
+    <div className="min-h-screen bg-slate-100 font-sans text-slate-800 dark:bg-slate-900 dark:text-slate-200">
       <Header />
       <main className="container mx-auto p-4 md:p-8">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl md:text-3xl font-bold text-center text-slate-700 dark:text-slate-300 mb-2">Upload Your Utility Bill</h2>
-          <p className="text-center text-slate-500 dark:text-slate-400 mb-8">
+        <div className="mx-auto max-w-4xl">
+          <h2 className="mb-2 text-center text-2xl font-bold text-slate-700 md:text-3xl dark:text-slate-300">
+            Upload Your Utility Bill
+          </h2>
+          <p className="mb-8 text-center text-slate-500 dark:text-slate-400">
             Drop a PDF with one or more bills and let AI do the rest.
           </p>
 
-          <UploadZone onFileSelect={handleFileProcess} isProcessing={isProcessing} fileName={fileName} />
-          
+          <UploadZone
+            onFileSelect={handleFileProcess}
+            isProcessing={isProcessing}
+            fileName={fileName}
+          />
+
           {error && <ErrorDisplay message={error} />}
-          
-          <ApartmentFilter 
+
+          <ApartmentFilter
             apartments={apartments}
             selectedApartment={selectedApartment}
             onSelectApartment={setSelectedApartment}
           />
-          
-          <Dashboard bills={filteredBills} allBillsCount={bills.length} selectedApartment={selectedApartment} />
+
+          <Dashboard
+            bills={filteredBills}
+            allBillsCount={bills.length}
+            selectedApartment={selectedApartment}
+          />
         </div>
       </main>
     </div>
