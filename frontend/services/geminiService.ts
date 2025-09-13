@@ -1,10 +1,4 @@
-import { GoogleGenAI, Type } from '@google/genai';
-
-if (!process.env.API_KEY) {
-  throw new Error('API_KEY environment variable not set');
-}
-
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+import { Type } from '@google/genai';
 
 const billSchema = {
   type: Type.OBJECT,
@@ -99,16 +93,27 @@ export async function extractBillDataFromPdf(pdfBase64: string) {
       text: "This PDF may contain one or more utility bills, potentially for different apartments or service addresses. For each distinct bill found, extract the utility bill information. Provide details like vendor name, apartment/unit number or service address, bill date, due date, total amount, consumption usage, and account number. Also, extract a detailed breakdown of charges or line items, including the description and amount for each. If no breakdown is available, provide an empty array for the breakdown. Return the result as a JSON array of objects. Ensure dates are in YYYY-MM-DD format. If a bill is for something like garbage collection, usage value can be 0 and unit can be 'Service'.",
     };
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: { parts: [pdfPart, textPart] },
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: billListSchema,
+    const response = await fetch('/api/v1beta/models/gemini-2.5-flash:generateContent', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
+      body: JSON.stringify({
+        contents: { parts: [pdfPart, textPart] },
+        generationConfig: {
+          responseMimeType: 'application/json',
+          responseSchema: billListSchema,
+        },
+      }),
     });
 
-    const jsonText = response.text.trim();
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error.message || 'An unknown error occurred.');
+    }
+
+    const data = await response.json();
+    const jsonText = data.candidates[0].content.parts[0].text.trim();
     let parsedData;
     try {
       parsedData = JSON.parse(jsonText);
