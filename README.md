@@ -1,5 +1,7 @@
 # Utilities Bill Visualizer
 
+[![CI/CD Pipeline](https://github.com/MohammadMushfiqurRahman/utilities_bill_visualizer/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/MohammadMushfiqurRahman/utilities_bill_visualizer/actions/workflows/ci-cd.yml)
+
 This project is a web application that allows users to upload their utility bills in PDF format, extracts the relevant data using AI, and displays it in a user-friendly dashboard.
 
 ## About the Project
