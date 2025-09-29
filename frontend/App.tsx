@@ -79,37 +79,45 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-100 font-sans text-slate-800 dark:bg-slate-900 dark:text-slate-200">
-      <Header />
-      <main className="container mx-auto p-4 md:p-8">
-        <div className="mx-auto max-w-4xl">
-          <h2 className="mb-2 text-center text-2xl font-bold text-slate-700 md:text-3xl dark:text-slate-300">
-            Upload Your Utility Bill
-          </h2>
-          <p className="mb-8 text-center text-slate-500 dark:text-slate-400">
-            Drop a PDF with one or more bills and let AI do the rest.
-          </p>
-
-          <UploadZone
-            onFileSelect={handleFileProcess}
-            isProcessing={isProcessing}
-            fileName={fileName}
-          />
-
-          {error && <ErrorDisplay message={error} />}
-
-          <ApartmentFilter
-            apartments={apartments}
-            selectedApartment={selectedApartment}
-            onSelectApartment={setSelectedApartment}
-          />
-
+      <div className="flex flex-col md:flex-row">
+        <div className="w-full md:w-1/3 md:border-r md:border-slate-200 dark:md:border-slate-700">
+          <Header />
+          <div className="p-4">
+            <h2 className="mb-2 text-center text-2xl font-bold text-slate-700 md:text-3xl dark:text-slate-300">
+              Upload Your Utility Bill
+            </h2>
+            <p className="mb-8 text-center text-slate-500 dark:text-slate-400">
+              Drop a PDF with one or more bills and let AI do the rest.
+            </p>
+            <UploadZone
+              onFileSelect={handleFileProcess}
+              isProcessing={isProcessing}
+              fileName={fileName}
+            />
+            {error && <ErrorDisplay message={error} />}
+            <ApartmentFilter
+              apartments={apartments}
+              selectedApartment={selectedApartment}
+              onSelectApartment={setSelectedApartment}
+            />
+            <div className="mt-8">
+              <h3 className="text-lg font-bold text-slate-700 dark:text-slate-300">Uploaded Bills</h3>
+              <div className="mt-4 space-y-4">
+                {filteredBills.map((bill) => (
+                  <BillCard key={bill.id} bill={bill} />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="w-full md:w-2/3">
           <Dashboard
             bills={filteredBills}
             allBillsCount={bills.length}
             selectedApartment={selectedApartment}
           />
         </div>
-      </main>
+      </div>
     </div>
   );
 };
