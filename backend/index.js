@@ -6,6 +6,7 @@ const errorMiddleware = require('./errorMiddleware');
 const authMiddleware = require('./authMiddleware');
 const billRoutes = require('./routes/billRoutes');
 const authRoutes = require('./routes/authRoutes');
+const geminiRoutes = require('./routes/geminiRoutes');
 const sequelize = require('./database/database');
 
 const app = express();
@@ -28,6 +29,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // --- API Endpoints ---
 app.use('/api/auth', authRoutes);
+app.use('/api', authMiddleware, geminiRoutes);
 app.use('/api', authMiddleware, billRoutes);
 
 // Error Handling Middleware
