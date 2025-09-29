@@ -9,7 +9,7 @@ export const Header: React.FC = () => {
           <div className="flex items-center space-x-3">
             <LogoIcon className="h-8 w-8 text-blue-600" />
             <span className="text-xl font-bold tracking-tight text-slate-800 dark:text-slate-200">
-              Utility AI
+              Utilities Bill Visualizer
             </span>
           </div>
         </div>
