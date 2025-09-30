@@ -1,8 +1,9 @@
 import React from 'react';
 import { BillData } from '../types';
-import BillCard from './BillCard';
 import SummaryChart from './SummaryChart';
-import { DocumentSearchIcon } from './icons';
+import VendorChart from './VendorChart';
+import SummaryCard from './SummaryCard';
+import { DocumentSearchIcon, DollarSignIcon, AverageIcon, BoltIcon } from './icons';
 
 interface DashboardProps {
   bills: BillData[];
@@ -25,14 +26,6 @@ const Dashboard: React.FC<DashboardProps> = ({ bills, allBillsCount, selectedApa
     );
   }
 
-  const summaryTitle =
-    selectedApartment === 'all'
-      ? 'Overall Spending Summary'
-      : `Spending Summary for ${selectedApartment}`;
-
-  const allBillsTitle =
-    selectedApartment === 'all' ? 'All Bills' : `Bills for ${selectedApartment}`;
-
   if (bills.length === 0 && allBillsCount > 0) {
     return (
       <div className="mt-8 rounded-lg bg-white px-6 py-16 text-center shadow-sm dark:bg-slate-800/50">
@@ -47,20 +40,42 @@ const Dashboard: React.FC<DashboardProps> = ({ bills, allBillsCount, selectedApa
     );
   }
 
+  const totalAmount = bills.reduce((acc, bill) => acc + bill.totalAmount, 0);
+  const averageBill = bills.length > 0 ? totalAmount / bills.length : 0;
+  const highestBill = Math.max(...bills.map(bill => bill.totalAmount), 0);
+
+  const summaryTitle =
+    selectedApartment === 'all'
+      ? 'Overall Spending Summary'
+      : `Spending Summary for ${selectedApartment}`;
+
   return (
-    <div className="mt-2">
-      <h3 className="mb-6 text-2xl font-bold text-slate-700 dark:text-slate-300">{summaryTitle}</h3>
-      <div className="rounded-xl bg-white p-4 shadow-md sm:p-6 dark:bg-slate-800">
+    <div className="p-4 md:p-8">
+      <h2 className="mb-6 text-2xl font-bold text-slate-700 dark:text-slate-300">{summaryTitle}</h2>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <SummaryCard
+          title="Total Amount Due"
+          value={`$${totalAmount.toFixed(2)}`}
+          icon={<DollarSignIcon className="h-8 w-8 text-blue-600" />}
+        />
+        <SummaryCard
+          title="Average Bill"
+          value={`$${averageBill.toFixed(2)}`}
+          icon={<AverageIcon className="h-8 w-8 text-green-600" />}
+        />
+        <SummaryCard
+          title="Highest Bill"
+          value={`$${highestBill.toFixed(2)}`}
+          icon={<BoltIcon className="h-8 w-8 text-red-600" />}
+        />
+      </div>
+
+      <div className="mt-8">
         <SummaryChart bills={bills} />
       </div>
 
-      <h3 className="mt-12 mb-6 text-2xl font-bold text-slate-700 dark:text-slate-300">
-        {allBillsTitle}
-      </h3>
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {bills.map((bill) => (
-          <BillCard key={bill.id} bill={bill} />
-        ))}
+      <div className="mt-8">
+        <VendorChart bills={bills} />
       </div>
     </div>
   );
