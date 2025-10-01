@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { BillData } from './types';
-import { extractBillDataFromPdf } from './services/geminiService';
 import UploadZone from './components/UploadZone';
 import Dashboard from './components/Dashboard';
 import { Header } from './components/Header';
@@ -25,7 +24,21 @@ const App: React.FC = () => {
       reader.onload = async () => {
         try {
           const base64String = (reader.result as string).split(',')[1];
-          const newBillsData = await extractBillDataFromPdf(base64String);
+          
+          const response = await fetch('/api/process-gemini', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ pdfBase64: base64String }),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to process PDF.');
+          }
+
+          const newBillsData = await response.json();
 
           if (!newBillsData || newBillsData.length === 0) {
             throw new Error('No valid bills were found in the provided PDF.');
