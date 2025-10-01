@@ -115,8 +115,6 @@ The CI/CD pipeline is defined in the `.github/workflows/ci-cd.yml` file and cons
 
 ### Docker Deployment
 
-When you deploy the application, the database tables will be created automatically. See the "Database" section for more information. For production environments, it is recommended to use a migration tool to manage database schema changes.
-
 To deploy the application using Docker, you can manually run the following commands:
 
 1. **Build and run the containers**
