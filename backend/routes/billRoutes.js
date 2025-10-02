@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
+const { Op } = require('sequelize');
 const { parsePdf } = require('../services/pdfService');
 const { extractBillDataFromPdfWithGemini } = require('../services/geminiPdfService');
 const Bill = require('../models/bill');
@@ -22,7 +23,7 @@ router.post('/upload', upload.single('bill'), async (req, res, next) => {
       return res.status(400).send('Could not extract all required fields from the PDF.');
     }
 
-    const bill = await Bill.create({ amountDue, dueDate, usage });
+    const bill = await Bill.create({ totalAmount: amountDue, dueDate, usageValue: usage });
 
     res.status(201).json({
       message: 'File uploaded, parsed, and saved successfully!',
@@ -36,7 +37,24 @@ router.post('/upload', upload.single('bill'), async (req, res, next) => {
 // Endpoint to get all bills
 router.get('/bills', async (req, res, next) => {
   try {
-    const bills = await Bill.findAll();
+    const { sortBy, order, startDate, endDate, apartment } = req.query;
+
+    const where = {};
+    if (startDate && endDate) {
+      where.billDate = {
+        [Op.between]: [new Date(startDate), new Date(endDate)],
+      };
+    }
+    if (apartment && apartment !== 'all') {
+      where.apartment = apartment;
+    }
+
+    const orderClause = [];
+    if (sortBy && order) {
+      orderClause.push([sortBy, order]);
+    }
+
+    const bills = await Bill.findAll({ where, order: orderClause });
     res.status(200).json(bills);
   } catch (error) {
     next(error);
@@ -65,8 +83,38 @@ router.post('/process-gemini', async (req, res, next) => {
     if (!pdfBase64) {
       return res.status(400).send('No PDF data provided.');
     }
-    const bills = await extractBillDataFromPdfWithGemini(pdfBase64);
-    res.status(200).json(bills);
+    const extractedBills = await extractBillDataFromPdfWithGemini(pdfBase64);
+    res.status(200).json(extractedBills);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Endpoint for bulk bill creation
+router.post('/bills/bulk', async (req, res, next) => {
+  try {
+    const { bills } = req.body;
+    if (!bills || !Array.isArray(bills)) {
+      return res.status(400).send('Invalid request body. Expected a 'bills' array.');
+    }
+
+    const savedBills = await Promise.all(
+      bills.map((bill) =>
+        Bill.create({
+          vendorName: bill.vendorName,
+          billDate: bill.billDate,
+          dueDate: bill.dueDate,
+          totalAmount: bill.totalAmount,
+          usageValue: bill.usage?.value,
+          usageUnit: bill.usage?.unit,
+          accountNumber: bill.accountNumber,
+          apartment: bill.apartment,
+          breakdown: bill.breakdown,
+        })
+      )
+    );
+
+    res.status(201).json(savedBills);
   } catch (error) {
     next(error);
   }
