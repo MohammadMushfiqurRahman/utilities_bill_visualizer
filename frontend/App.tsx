@@ -7,9 +7,11 @@ import { ErrorDisplay } from './components/ErrorDisplay';
 import { ApartmentFilter } from './components/ApartmentFilter';
 import FilterControls from './components/FilterControls';
 import BillCard from './components/BillCard';
+import ReviewBillsModal from './components/ReviewBillsModal';
 
 const App: React.FC = () => {
   const [bills, setBills] = useState<BillData[]>([]);
+  const [pendingBills, setPendingBills] = useState<BillData[]>([]);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -57,7 +59,7 @@ const App: React.FC = () => {
             id: crypto.randomUUID(),
           }));
 
-          setBills((prevBills) => [...prevBills, ...billsWithIds]);
+          setPendingBills(billsWithIds);
         } catch (e) {
           console.error(e);
           setError(
@@ -81,6 +83,15 @@ const App: React.FC = () => {
       setError(e instanceof Error ? e.message : 'An unexpected error occurred.');
     }
   }, []);
+
+  const handleApproveBills = (approvedBills: BillData[]) => {
+    setBills((prevBills) => [...prevBills, ...approvedBills]);
+    setPendingBills([]);
+  };
+
+  const handleDiscardBills = () => {
+    setPendingBills([]);
+  };
 
   const apartments = useMemo(
     () => ['all', ...Array.from(new Set(bills.map((b) => b.apartment).filter(Boolean)))],
@@ -124,6 +135,13 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-100 font-sans text-slate-800 dark:bg-slate-900 dark:text-slate-200">
+      {pendingBills.length > 0 && (
+        <ReviewBillsModal
+          bills={pendingBills}
+          onApprove={handleApproveBills}
+          onDiscard={handleDiscardBills}
+        />
+      )}
       <div className="flex flex-col md:flex-row">
         <div className="w-full md:w-1/3 md:border-r md:border-slate-200 dark:md:border-slate-700">
           <Header />
