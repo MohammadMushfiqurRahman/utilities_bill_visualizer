@@ -2,17 +2,36 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../database/database');
 
 const Bill = sequelize.define('Bill', {
-  amountDue: {
-    type: DataTypes.FLOAT,
+  vendorName: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  billDate: {
+    type: DataTypes.DATE,
     allowNull: false,
   },
   dueDate: {
     type: DataTypes.DATE,
     allowNull: false,
   },
-  usage: {
+  totalAmount: {
     type: DataTypes.FLOAT,
     allowNull: false,
+  },
+  usageValue: {
+    type: DataTypes.FLOAT,
+  },
+  usageUnit: {
+    type: DataTypes.STRING,
+  },
+  accountNumber: {
+    type: DataTypes.STRING,
+  },
+  apartment: {
+    type: DataTypes.STRING,
+  },
+  breakdown: {
+    type: DataTypes.JSON,
   },
 });
 
