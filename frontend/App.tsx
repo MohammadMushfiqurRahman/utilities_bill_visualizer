@@ -5,6 +5,8 @@ import Dashboard from './components/Dashboard';
 import { Header } from './components/Header';
 import { ErrorDisplay } from './components/ErrorDisplay';
 import { ApartmentFilter } from './components/ApartmentFilter';
+import FilterControls from './components/FilterControls';
+import BillCard from './components/BillCard';
 
 const App: React.FC = () => {
   const [bills, setBills] = useState<BillData[]>([]);
@@ -12,6 +14,12 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [selectedApartment, setSelectedApartment] = useState<string>('all');
+  const [sortKey, setSortKey] = useState<string>('billDate');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [dateRange, setDateRange] = useState<{ start: string; end: string }>({
+    start: '',
+    end: '',
+  });
 
   const handleFileProcess = useCallback(async (file: File) => {
     setIsProcessing(true);
@@ -24,7 +32,7 @@ const App: React.FC = () => {
       reader.onload = async () => {
         try {
           const base64String = (reader.result as string).split(',')[1];
-          
+
           const response = await fetch('/api/process-gemini', {
             method: 'POST',
             headers: {
@@ -49,11 +57,7 @@ const App: React.FC = () => {
             id: crypto.randomUUID(),
           }));
 
-          setBills((prevBills) =>
-            [...prevBills, ...billsWithIds].sort(
-              (a, b) => new Date(a.billDate).getTime() - new Date(b.billDate).getTime()
-            )
-          );
+          setBills((prevBills) => [...prevBills, ...billsWithIds]);
         } catch (e) {
           console.error(e);
           setError(
@@ -84,11 +88,39 @@ const App: React.FC = () => {
   );
 
   const filteredBills = useMemo(() => {
-    if (selectedApartment === 'all') {
-      return bills;
+    let filtered = bills;
+
+    if (selectedApartment !== 'all') {
+      filtered = filtered.filter((bill) => bill.apartment === selectedApartment);
     }
-    return bills.filter((bill) => bill.apartment === selectedApartment);
-  }, [bills, selectedApartment]);
+
+    if (dateRange.start && dateRange.end) {
+      const startDate = new Date(dateRange.start).getTime();
+      const endDate = new Date(dateRange.end).getTime();
+      filtered = filtered.filter((bill) => {
+        const billDate = new Date(bill.billDate).getTime();
+        return billDate >= startDate && billDate <= endDate;
+      });
+    }
+
+    return filtered.sort((a, b) => {
+      const aValue = a[sortKey as keyof BillData];
+      const bValue = b[sortKey as keyof BillData];
+
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        return sortOrder === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+      }
+
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
+      }
+
+      // Fallback for dates
+      const aDate = new Date(a.billDate).getTime();
+      const bDate = new Date(b.billDate).getTime();
+      return sortOrder === 'asc' ? aDate - bDate : bDate - aDate;
+    });
+  }, [bills, selectedApartment, sortKey, sortOrder, dateRange]);
 
   return (
     <div className="min-h-screen bg-slate-100 font-sans text-slate-800 dark:bg-slate-900 dark:text-slate-200">
@@ -112,6 +144,14 @@ const App: React.FC = () => {
               apartments={apartments}
               selectedApartment={selectedApartment}
               onSelectApartment={setSelectedApartment}
+            />
+            <FilterControls
+              sortKey={sortKey}
+              setSortKey={setSortKey}
+              sortOrder={sortOrder}
+              setSortOrder={setSortOrder}
+              dateRange={dateRange}
+              setDateRange={setDateRange}
             />
             <div className="mt-8">
               <h3 className="text-lg font-bold text-slate-700 dark:text-slate-300">Uploaded Bills</h3>
