@@ -13,6 +13,8 @@ The Utilities Bill Visualizer is designed to simplify the process of tracking an
 - **PDF Bill Parsing:** Automatically extracts data from PDF utility bills using the Gemini API.
 - **Data Visualization:** Displays extracted data in a clean and interactive dashboard.
 - **Apartment Filtering:** Allows users to filter bills by apartment to analyze costs for individual units.
+- **Advanced Filtering and Sorting:** Filter bills by date range and sort them by date or amount.
+- **Manual Data Correction:** Review and edit the extracted data before it's added to the dashboard.
 - **Secure Authentication:** User registration and login functionality to protect user data.
 - **RESTful API:** A well-defined API for managing bills and user authentication.
 
