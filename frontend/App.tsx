@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { BillData } from './types';
 import UploadZone from './components/UploadZone';
 import Dashboard from './components/Dashboard';
@@ -11,17 +11,65 @@ import ReviewBillsModal from './components/ReviewBillsModal';
 
 const App: React.FC = () => {
   const [bills, setBills] = useState<BillData[]>([]);
+  const [allApartments, setAllApartments] = useState<string[]>([]);
   const [pendingBills, setPendingBills] = useState<BillData[]>([]);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [selectedApartment, setSelectedApartment] = useState<string>('all');
   const [sortKey, setSortKey] = useState<string>('billDate');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({
     start: '',
     end: '',
   });
+
+  const fetchBills = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const params = new URLSearchParams({
+        sortBy: sortKey,
+        order: sortOrder,
+        apartment: selectedApartment,
+        ...(dateRange.start && { startDate: dateRange.start }),
+        ...(dateRange.end && { endDate: dateRange.end }),
+      });
+      const response = await fetch(`/api/bills?${params.toString()}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch bills.');
+      }
+      const data = await response.json();
+      setBills(data);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'An unknown error occurred.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [sortKey, sortOrder, selectedApartment, dateRange]);
+
+  const fetchAllApartments = useCallback(async () => {
+    try {
+      const response = await fetch('/api/bills'); // Fetch all bills without filters
+      if (!response.ok) {
+        throw new Error('Failed to fetch apartments.');
+      }
+      const allBills = await response.json();
+      const uniqueApartments = ['all', ...Array.from(new Set(allBills.map((b: BillData) => b.apartment).filter(Boolean)))];
+      setAllApartments(uniqueApartments);
+    } catch (e) {
+      console.error('Failed to fetch apartments:', e);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchBills();
+    fetchAllApartments();
+  }, []); // Initial fetch
+
+  useEffect(() => {
+    fetchBills();
+  }, [fetchBills]); // Refetch when filters/sorting change
 
   const handleFileProcess = useCallback(async (file: File) => {
     setIsProcessing(true);
@@ -56,82 +104,49 @@ const App: React.FC = () => {
 
           const billsWithIds: BillData[] = newBillsData.map((bill: Omit<BillData, 'id'>) => ({
             ...bill,
-            id: crypto.randomUUID(),
+            id: crypto.randomUUID(), // Keep temporary ID for the review modal key
           }));
 
           setPendingBills(billsWithIds);
         } catch (e) {
-          console.error(e);
-          setError(
-            e instanceof Error
-              ? `Failed to process the PDF: ${e.message}`
-              : 'An unknown error occurred during PDF processing.'
-          );
+          setError(e instanceof Error ? `Failed to process PDF: ${e.message}` : 'An unknown error occurred.');
         } finally {
           setIsProcessing(false);
           setFileName(null);
         }
       };
-      reader.onerror = () => {
-        setIsProcessing(false);
-        setFileName(null);
-        setError('Failed to read the file.');
-      };
     } catch (e) {
+      setError(e instanceof Error ? e.message : 'An unexpected error occurred.');
       setIsProcessing(false);
       setFileName(null);
-      setError(e instanceof Error ? e.message : 'An unexpected error occurred.');
     }
   }, []);
 
-  const handleApproveBills = (approvedBills: BillData[]) => {
-    setBills((prevBills) => [...prevBills, ...approvedBills]);
-    setPendingBills([]);
+  const handleApproveBills = async (approvedBills: BillData[]) => {
+    try {
+      const response = await fetch('/api/bills/bulk', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ bills: approvedBills }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save approved bills.');
+      }
+
+      setPendingBills([]);
+      await fetchBills(); // Refresh the bill list
+      await fetchAllApartments(); // Refresh apartment list
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'An unknown error occurred.');
+    }
   };
 
   const handleDiscardBills = () => {
     setPendingBills([]);
   };
-
-  const apartments = useMemo(
-    () => ['all', ...Array.from(new Set(bills.map((b) => b.apartment).filter(Boolean)))],
-    [bills]
-  );
-
-  const filteredBills = useMemo(() => {
-    let filtered = bills;
-
-    if (selectedApartment !== 'all') {
-      filtered = filtered.filter((bill) => bill.apartment === selectedApartment);
-    }
-
-    if (dateRange.start && dateRange.end) {
-      const startDate = new Date(dateRange.start).getTime();
-      const endDate = new Date(dateRange.end).getTime();
-      filtered = filtered.filter((bill) => {
-        const billDate = new Date(bill.billDate).getTime();
-        return billDate >= startDate && billDate <= endDate;
-      });
-    }
-
-    return filtered.sort((a, b) => {
-      const aValue = a[sortKey as keyof BillData];
-      const bValue = b[sortKey as keyof BillData];
-
-      if (typeof aValue === 'string' && typeof bValue === 'string') {
-        return sortOrder === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
-      }
-
-      if (typeof aValue === 'number' && typeof bValue === 'number') {
-        return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
-      }
-
-      // Fallback for dates
-      const aDate = new Date(a.billDate).getTime();
-      const bDate = new Date(b.billDate).getTime();
-      return sortOrder === 'asc' ? aDate - bDate : bDate - aDate;
-    });
-  }, [bills, selectedApartment, sortKey, sortOrder, dateRange]);
 
   return (
     <div className="min-h-screen bg-slate-100 font-sans text-slate-800 dark:bg-slate-900 dark:text-slate-200">
@@ -159,7 +174,7 @@ const App: React.FC = () => {
             />
             {error && <ErrorDisplay message={error} />}
             <ApartmentFilter
-              apartments={apartments}
+              apartments={allApartments}
               selectedApartment={selectedApartment}
               onSelectApartment={setSelectedApartment}
             />
@@ -173,18 +188,22 @@ const App: React.FC = () => {
             />
             <div className="mt-8">
               <h3 className="text-lg font-bold text-slate-700 dark:text-slate-300">Uploaded Bills</h3>
-              <div className="mt-4 space-y-4">
-                {filteredBills.map((bill) => (
-                  <BillCard key={bill.id} bill={bill} />
-                ))}
-              </div>
+              {isLoading ? (
+                <p className="text-center text-slate-500 dark:text-slate-400">Loading bills...</p>
+              ) : (
+                <div className="mt-4 space-y-4">
+                  {bills.map((bill) => (
+                    <BillCard key={bill.id} bill={bill} />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
         <div className="w-full md:w-2/3">
           <Dashboard
-            bills={filteredBills}
-            allBillsCount={bills.length}
+            bills={bills}
+            allBillsCount={bills.length} // This might need adjustment depending on desired total
             selectedApartment={selectedApartment}
           />
         </div>
