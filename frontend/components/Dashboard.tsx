@@ -9,9 +9,10 @@ interface DashboardProps {
   bills: BillData[];
   allBillsCount: number;
   selectedApartment: string;
+  onClearFilters: () => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ bills, allBillsCount, selectedApartment }) => {
+const Dashboard: React.FC<DashboardProps> = ({ bills, allBillsCount, selectedApartment, onClearFilters }) => {
   if (allBillsCount === 0) {
     return (
       <div className="mt-8 rounded-lg bg-white px-6 py-16 text-center shadow-sm dark:bg-slate-800/50">
