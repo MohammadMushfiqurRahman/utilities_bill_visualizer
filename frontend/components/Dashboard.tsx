@@ -35,8 +35,14 @@ const Dashboard: React.FC<DashboardProps> = ({ bills, allBillsCount, selectedApa
           No Bills Found
         </h3>
         <p className="mt-2 text-slate-500 dark:text-slate-400">
-          There are no bills matching the filter "{selectedApartment}".
+          There are no bills matching the current filters.
         </p>
+        <button
+          onClick={onClearFilters}
+          className="mt-4 rounded-md bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
+        >
+          Clear Filters
+        </button>
       </div>
     );
   }
