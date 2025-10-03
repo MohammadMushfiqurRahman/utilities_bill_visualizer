@@ -148,6 +148,13 @@ const App: React.FC = () => {
     setPendingBills([]);
   };
 
+  const handleClearFilters = () => {
+    setSelectedApartment('all');
+    setSortKey('billDate');
+    setSortOrder('desc');
+    setDateRange({ start: '', end: '' });
+  };
+
   return (
     <div className="min-h-screen bg-slate-100 font-sans text-slate-800 dark:bg-slate-900 dark:text-slate-200">
       {pendingBills.length > 0 && (
