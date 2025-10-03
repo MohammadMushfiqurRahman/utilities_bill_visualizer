@@ -212,6 +212,7 @@ const App: React.FC = () => {
             bills={bills}
             allBillsCount={bills.length} // This might need adjustment depending on desired total
             selectedApartment={selectedApartment}
+            onClearFilters={handleClearFilters}
           />
         </div>
       </div>
