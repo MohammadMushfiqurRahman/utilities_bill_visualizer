@@ -124,7 +124,7 @@ To deploy the application using Docker, you can manually run the following comma
    docker-compose up -d --build
    ```
 2. **Access the application**
-   Open your browser and navigate to `http://localhost`
+   Open your browser and navigate to `http://localhost:8080`
 
 ### Secrets
 
