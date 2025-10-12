@@ -87,13 +87,21 @@ const App: React.FC = () => {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('token')}`,
             },
             body: JSON.stringify({ pdfBase64: base64String }),
           });
 
           if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Failed to process PDF.');
+            let errorMessage = 'Failed to process PDF.';
+            try {
+              const errorData = await response.json();
+              errorMessage = errorData.message || errorMessage;
+            } catch (e) {
+              // The response was not JSON, use the status text as a fallback
+              errorMessage = `Server error: ${response.status} ${response.statusText}`;
+            }
+            throw new Error(errorMessage);
           }
 
           const newBillsData = await response.json();

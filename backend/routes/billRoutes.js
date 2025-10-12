@@ -95,7 +95,7 @@ router.post('/bills/bulk', async (req, res, next) => {
   try {
     const { bills } = req.body;
     if (!bills || !Array.isArray(bills)) {
-      return res.status(400).send('Invalid request body. Expected a 'bills' array.');
+      return res.status(400).send("Invalid request body. Expected a 'bills' array.");
     }
 
     const savedBills = await Promise.all(
