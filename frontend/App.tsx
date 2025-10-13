@@ -117,14 +117,18 @@ const App: React.FC = () => {
 
           setPendingBills(billsWithIds);
         } catch (e) {
-          setError(e instanceof Error ? `Failed to process PDF: ${e.message}` : 'An unknown error occurred.');
+          const errorMessage = e instanceof Error ? `Failed to process PDF: ${e.message}` : 'An unknown error occurred.';
+          setError(errorMessage);
+          console.error("Processing Error:", e); // Log the full error
         } finally {
           setIsProcessing(false);
           setFileName(null);
         }
       };
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'An unexpected error occurred.');
+      const errorMessage = e instanceof Error ? e.message : 'An unexpected error occurred.';
+      setError(errorMessage);
+      console.error("File Handling Error:", e); // Log the full error
       setIsProcessing(false);
       setFileName(null);
     }
