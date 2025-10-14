@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Sun, Moon } from 'lucide-react';
+import { SunIcon, MoonIcon } from './icons';
 
 const ThemeToggle = () => {
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -30,9 +30,9 @@ const ThemeToggle = () => {
       className="p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
     >
       {isDarkMode ? (
-        <Sun className="w-6 h-6 text-yellow-500" />
+        <SunIcon className="w-6 h-6 text-yellow-500" />
       ) : (
-        <Moon className="w-6 h-6 text-gray-700" />
+        <MoonIcon className="w-6 h-6 text-gray-700" />
       )}
     </button>
   );
