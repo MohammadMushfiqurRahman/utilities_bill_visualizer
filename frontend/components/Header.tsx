@@ -1,5 +1,6 @@
 import React from 'react';
 import { LogoIcon } from './icons';
+import ThemeToggle from './ThemeToggle';
 
 export const Header: React.FC = () => {
   return (
@@ -11,6 +12,9 @@ export const Header: React.FC = () => {
             <span className="text-xl font-bold tracking-tight text-slate-800 dark:text-slate-200">
               Utilities Bill Visualizer
             </span>
+          </div>
+          <div className="flex items-center">
+            <ThemeToggle />
           </div>
         </div>
       </div>
