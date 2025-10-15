@@ -1,7 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { BillData } from './types';
 import Dashboard from './components/Dashboard';
-import { Header } from './components/Header';
 import { ApartmentFilter } from './components/ApartmentFilter';
 import FilterControls from './components/FilterControls';
 import BillCard from './components/BillCard';
@@ -171,7 +170,6 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-100 font-sans text-slate-800 dark:bg-slate-900 dark:text-slate-200">
-      <Header />
       {pendingBills.length > 0 && (
         <ReviewBillsModal
           bills={pendingBills}
