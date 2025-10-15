@@ -10,6 +10,7 @@ import { UploadIcon } from './components/icons';
 
 const App: React.FC = () => {
   const [bills, setBills] = useState<BillData[]>([]);
+  const [previousBills, setPreviousBills] = useState<BillData[]>([]);
   const [allApartments, setAllApartments] = useState<string[]>([]);
   const [pendingBills, setPendingBills] = useState<BillData[]>([]);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
@@ -28,19 +29,50 @@ const App: React.FC = () => {
   const fetchBills = useCallback(async () => {
     setIsLoading(true);
     try {
-      const params = new URLSearchParams({
+      const { start, end } = dateRange;
+      const startDate = start ? new Date(start) : null;
+      const endDate = end ? new Date(end) : null;
+
+      let previousStartDate: Date | null = null;
+      let previousEndDate: Date | null = null;
+
+      if (startDate && endDate) {
+        const diff = endDate.getTime() - startDate.getTime();
+        previousEndDate = new Date(startDate.getTime() - 1);
+        previousStartDate = new Date(previousEndDate.getTime() - diff);
+      }
+
+      const fetchPromises = [];
+
+      // Current period promise
+      const currentParams = new URLSearchParams({
         sortBy: sortKey,
         order: sortOrder,
         apartment: selectedApartment,
-        ...(dateRange.start && { startDate: dateRange.start }),
-        ...(dateRange.end && { endDate: dateRange.end }),
+        ...(start && { startDate: start }),
+        ...(end && { endDate: end }),
       });
-      const response = await fetch(`/api/bills?${params.toString()}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch bills.');
+      fetchPromises.push(fetch(`/api/bills?${currentParams.toString()}`).then((res) => res.json()));
+
+      // Previous period promise
+      if (previousStartDate && previousEndDate) {
+        const previousParams = new URLSearchParams({
+          sortBy: sortKey,
+          order: sortOrder,
+          apartment: selectedApartment,
+          startDate: previousStartDate.toISOString().split('T')[0],
+          endDate: previousEndDate.toISOString().split('T')[0],
+        });
+        fetchPromises.push(fetch(`/api/bills?${previousParams.toString()}`).then((res) => res.json()));
+      } else {
+        fetchPromises.push(Promise.resolve([])); // Resolve with empty array if no previous period
       }
-      const data = await response.json();
-      setBills(data);
+
+      const [currentData, previousData] = await Promise.all(fetchPromises);
+
+      setBills(currentData);
+      setPreviousBills(previousData);
+
     } catch (e) {
       setError(e instanceof Error ? e.message : 'An unknown error occurred.');
     } finally {
@@ -228,6 +260,7 @@ const App: React.FC = () => {
             </div>
             <Dashboard
               bills={bills}
+              previousBills={previousBills}
               allBillsCount={bills.length} // This might need adjustment depending on desired total
               selectedApartment={selectedApartment}
               onClearFilters={handleClearFilters}
