@@ -1,13 +1,13 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { BillData } from './types';
-import UploadZone from './components/UploadZone';
 import Dashboard from './components/Dashboard';
 import { Header } from './components/Header';
-import { ErrorDisplay } from './components/ErrorDisplay';
 import { ApartmentFilter } from './components/ApartmentFilter';
 import FilterControls from './components/FilterControls';
 import BillCard from './components/BillCard';
 import ReviewBillsModal from './components/ReviewBillsModal';
+import UploadModal from './components/UploadModal';
+import { UploadIcon } from './components/icons';
 
 const App: React.FC = () => {
   const [bills, setBills] = useState<BillData[]>([]);
@@ -24,6 +24,7 @@ const App: React.FC = () => {
     start: '',
     end: '',
   });
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState<boolean>(false);
 
   const fetchBills = useCallback(async () => {
     setIsLoading(true);
@@ -116,6 +117,7 @@ const App: React.FC = () => {
           }));
 
           setPendingBills(billsWithIds);
+          setIsUploadModalOpen(false); // Close modal on success
         } catch (e) {
           const errorMessage = e instanceof Error ? `Failed to process PDF: ${e.message}` : 'An unknown error occurred.';
           setError(errorMessage);
@@ -169,6 +171,7 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-100 font-sans text-slate-800 dark:bg-slate-900 dark:text-slate-200">
+      <Header />
       {pendingBills.length > 0 && (
         <ReviewBillsModal
           bills={pendingBills}
@@ -176,56 +179,62 @@ const App: React.FC = () => {
           onDiscard={handleDiscardBills}
         />
       )}
+      <UploadModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        onFileSelect={handleFileProcess}
+        isProcessing={isProcessing}
+        fileName={fileName}
+        error={error}
+      />
       <div className="flex flex-col md:flex-row">
         <div className="w-full md:w-1/3 md:border-r md:border-slate-200 dark:md:border-slate-700">
-          <Header />
           <div className="p-4">
-            <h2 className="mb-2 text-center text-2xl font-bold text-slate-700 md:text-3xl dark:text-slate-300">
-              Upload Your Utility Bill
-            </h2>
-            <p className="mb-8 text-center text-slate-500 dark:text-slate-400">
-              Drop a PDF with one or more bills and let AI do the rest.
-            </p>
-            <UploadZone
-              onFileSelect={handleFileProcess}
-              isProcessing={isProcessing}
-              fileName={fileName}
-            />
-            {error && <ErrorDisplay message={error} />}
-            <ApartmentFilter
-              apartments={allApartments}
-              selectedApartment={selectedApartment}
-              onSelectApartment={setSelectedApartment}
-            />
-            <FilterControls
-              sortKey={sortKey}
-              setSortKey={setSortKey}
-              sortOrder={sortOrder}
-              setSortOrder={setSortOrder}
-              dateRange={dateRange}
-              setDateRange={setDateRange}
-            />
-            <div className="mt-8">
+            <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-bold text-slate-700 dark:text-slate-300">Uploaded Bills</h3>
-              {isLoading ? (
-                <p className="text-center text-slate-500 dark:text-slate-400">Loading bills...</p>
-              ) : (
-                <div className="mt-4 space-y-4">
-                  {bills.map((bill) => (
-                    <BillCard key={bill.id} bill={bill} />
-                  ))}
-                </div>
-              )}
+              <button
+                onClick={() => setIsUploadModalOpen(true)}
+                className="flex items-center space-x-2 rounded-md bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
+              >
+                <UploadIcon className="h-5 w-5" />
+                <span>Upload New Bill</span>
+              </button>
             </div>
+            {isLoading ? (
+              <p className="text-center text-slate-500 dark:text-slate-400">Loading bills...</p>
+            ) : (
+              <div className="mt-4 space-y-4">
+                {bills.map((bill) => (
+                  <BillCard key={bill.id} bill={bill} />
+                ))}
+              </div>
+            )}
           </div>
         </div>
         <div className="w-full md:w-2/3">
-          <Dashboard
-            bills={bills}
-            allBillsCount={bills.length} // This might need adjustment depending on desired total
-            selectedApartment={selectedApartment}
-            onClearFilters={handleClearFilters}
-          />
+          <div className="p-4">
+            <div className="mb-4 flex flex-wrap items-center gap-4">
+              <ApartmentFilter
+                apartments={allApartments}
+                selectedApartment={selectedApartment}
+                onSelectApartment={setSelectedApartment}
+              />
+              <FilterControls
+                sortKey={sortKey}
+                setSortKey={setSortKey}
+                sortOrder={sortOrder}
+                setSortOrder={setSortOrder}
+                dateRange={dateRange}
+                setDateRange={setDateRange}
+              />
+            </div>
+            <Dashboard
+              bills={bills}
+              allBillsCount={bills.length} // This might need adjustment depending on desired total
+              selectedApartment={selectedApartment}
+              onClearFilters={handleClearFilters}
+            />
+          </div>
         </div>
       </div>
     </div>
